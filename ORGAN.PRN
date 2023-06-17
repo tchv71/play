@@ -1,0 +1,1665 @@
+	MACRO-80 3.44	09-Dec-81	PAGE	1
+
+
+                                ;ORG 0 
+                                ;3-X CNKNQ[I ]KEJRPNNPC@M 
+                                ; 
+                                 
+                         C      include RK86.MAC 
+                         C      ;** RK86.MAC - Radio-86 computer specific constants & macro *** 
+                         C      ; 
+                         C      ;	09-Oct-1992  - first version 
+                         C      ;	15-Nov-1992  - Add 82XX.MAC 
+                         C       
+  0040                   C      ?Ctrl	equ	40h 
+  0020                   C      ?Shift	equ	20h 
+                         C       
+                         C      ; IN and OUT MACRO comands 
+                         C      @in	MACRO	addr 
+                         C      	lda	addr 
+                         C      	ENDM 
+                         C       
+                         C      @out	MACRO	addr 
+                         C      	sta	addr 
+                         C      	ENDM 
+                         C       
+  0001                   C      PALMIRA	EQU	1 
+                         C       
+                         C      ;************ Controller's mapping **************** 
+                         C      IFDEF PALMIRA 
+  CC00                   C      PSG1	equ	0CC00h;  8253 first	          * 
+  C800                   C      PSG2	equ	0C800h;  8253 second	      	  * 
+  C200                   C      PPI	equ	0C200h;  8255 fist		  * 
+  C400                   C      PPI2	equ	0C400h;  8255 second	   	  * 
+  C000                   C      DISP	equ	0C000h;  8275 display adapter	  * 
+  E000                   C      DMA	equ	0E000h;  8257 DMA chip	    	  * 
+                         C      ELSE 
+                         C      FDC	equ	0F700h;				  * 
+                         C      INTR	equ	0F720h;  8259 interrupt controller* 
+                         C      PSG1	equ	0F740h;  8253 first	          * 
+                         C      PSG2	equ	0F760h;  8253 second	      	  * 
+                         C      PPI	equ	0F780h;  8255 fist		  * 
+                         C      PPI2	equ	0F7A0h;  8255 second	   	  * 
+                         C      DISP	equ	0F7C0h;  8275 display adapter	  * 
+                         C      DMA	equ	0F7E0h;  8257 DMA chip	    	  * 
+                         C      ENDIF 
+                         C      ;************************************************** 
+                                IFDEF	PALMIRA 
+  F000                          LOTMP	EQU 0F000H 
+  A000                          VRAM_BUF	EQU 0A000h 
+  A0F2                          VRAM	EQU VRAM_BUF+0F2H;-78 
+                                ELSE 
+                                LOTMP	EQU 0F000H 
+                                VRAM_BUF	EQU 0D000h 
+                                VRAM	EQU VRAM_BUF+0F2H 
+                                ENDIF 
+  002A                          PNT	EQU '*' 
+                                 
+                                .PHASE 100h 
+  0100    CD 02A1               	CALL CLS 
+	MACRO-80 3.44	09-Dec-81	PAGE	1-1
+
+
+  0103    CD 0272               	CALL SET_DISPLAY 
+  0106    CD 0974               	CALL PRINT 
+  0109    A172                  	DW VRAM+128 
+  010B    56 45 52 53           	DB 'VERSION  1.0',80H 
+  010F    49 4F 4E 20           
+  0113    20 31 2E 30           
+  0117    80                    
+  0118    CD 0974               	CALL PRINT 
+  011B    A1C1                  	DW VRAM+207 
+  011D    38 2D 4F 43           	DB '8-OCT-1988',80H 
+  0121    54 2D 31 39           
+  0125    38 38 80              
+  0128    CD 0974               	CALL PRINT 
+  012B    A255                  	DW VRAM+355 
+  012D    2A 20 20 2A           	DB '*  *** *** *  * *',80H 
+  0131    2A 2A 20 2A           
+  0135    2A 2A 20 2A           
+  0139    20 20 2A 20           
+  013D    2A 80                 
+  013F    CD 0974               	CALL PRINT 
+  0142    A2A2                  	DW VRAM+432 
+  0144    2A 20 2A 20           	DB '* * * * *  * * ***',80H 
+  0148    2A 20 2A 20           
+  014C    2A 20 20 2A           
+  0150    20 2A 20 2A           
+  0154    2A 2A 80              
+  0157    CD 0974               	CALL PRINT 
+  015A    A2F0                  	DW VRAM+510 
+  015C    2A 20 2A 20           	DB '* * *** *  *** * *',80H 
+  0160    2A 2A 2A 20           
+  0164    2A 20 20 2A           
+  0168    2A 2A 20 2A           
+  016C    20 2A 80              
+  016F    CD 0974               	CALL PRINT 
+  0172    A33F                  	DW VRAM+589 
+  0174    2A 20 20 2A           	DB '*  *   *  * * * *',80H 
+  0178    20 20 20 2A           
+  017C    20 20 2A 20           
+  0180    2A 20 2A 20           
+  0184    2A 80                 
+  0186    CD 0974               	CALL PRINT 
+  0189    A3DA                  	DW VRAM+744 
+  018B    46 4F 52 20           	DB 'FOR SPECIAL 3-CHANNEL',80H 
+  018F    53 50 45 43           
+  0193    49 41 4C 20           
+  0197    33 2D 43 48           
+  019B    41 4E 4E 45           
+  019F    4C 80                 
+  01A1    CD 0974               	CALL PRINT 
+  01A4    A477                  	DW VRAM+901 
+  01A6    50 52 4F 47           	DB 'PROGRAMMING SOUND',80H 
+  01AA    52 41 4D 4D           
+  01AE    49 4E 47 20           
+  01B2    53 4F 55 4E           
+  01B6    44 80                 
+  01B8    CD 0974               	CALL PRINT 
+	MACRO-80 3.44	09-Dec-81	PAGE	1-2
+
+
+  01BB    A514                  	DW VRAM+1058 
+  01BD    47 45 4E 45           	DB 'GENERATOR ONLY (2 wi53)',80H 
+  01C1    52 41 54 4F           
+  01C5    52 20 4F 4E           
+  01C9    4C 59 20 28           
+  01CD    32 20 77 69           
+  01D1    35 33 29 80           
+  01D5    CD 0974               	CALL PRINT 
+  01D8    A5AF                  	DW VRAM+1213 
+  01DA    28 43 29 20           	DB '(C) BITBOYS 1988',80H 
+  01DE    42 49 54 42           
+  01E2    4F 59 53 20           
+  01E6    31 39 38 38           
+  01EA    80                    
+                                 
+  01EB    21 A620               	LXI H,VRAM+1326 
+  01EE    3E 40                 	MVI A,64 
+  01F0    36 2A                 	MVI M,'*' 
+  01F2    3D                    	DCR A 
+  01F3    23                    	INX H 
+  01F4    C2 01F0               	JNZ $-4 
+  01F7    3E 03                 	MVI A,3 
+  01F9    21 099D               	LXI H,OLDSND 
+  01FC    36 00                 	MVI M,0 
+  01FE    3D                    	DCR A 
+  01FF    23                    	INX H 
+  0200    C2 01FC               	JNZ $-4 
+                                 
+  0203    3E 1E                 	MVI A,30 
+  0205    32 0989               	STA LOUDN 
+  0208    CD 0477               	CALL DRFORM 
+  020B    CD 0371               	CALL DISLDN 
+  020E    3E 18                 	MVI A,24 
+  0210                          M30: 
+  0210    F5                    	PUSH PSW 
+  0211    CD 0841               	CALL DISKEY 
+  0214    F1                    	POP PSW 
+  0215    3C                    	INR A 
+  0216    FE 3F                 	CPI 63 
+  0218    C2 0210               	JNZ M30 
+  021B    3E 08                 	MVI A,8 
+  021D                          M31: 
+  021D    3D                    	DCR A 
+  021E    F5                    	PUSH PSW 
+  021F    CD 0892               	CALL DISNK 
+  0222    F1                    	POP PSW 
+  0223    B7                    	ORA A 
+  0224    C2 021D               	JNZ M31 
+  0227    CD 04B3               	CALL INITPL 
+  022A    CD 05FA               M00:	CALL LOOKBD 
+  022D    3E FD                 	MVI A,0FDH 
+  022F    32 C200               	STA PPI 
+  0232    3A C201               	LDA PPI+1 
+  0235    E6 02                 	ANI 02H 
+  0237    CC 02B1               	CZ CHGFRM ; OQ 
+  023A    3E FD                 	MVI A,0FDH 
+	MACRO-80 3.44	09-Dec-81	PAGE	1-3
+
+
+  023C    32 C200               	STA PPI 
+  023F    3A C201               	LDA PPI+1 
+  0242    E6 01                 	ANI 01H 
+  0244    CC 0337               	CZ LDN ; TAB 
+  0247    3E FD                 	MVI A,0FDH 
+  0249    32 C200               	STA PPI 
+  024C    3A C201               	LDA PPI+1 
+  024F    E6 04                 	ANI 04H 
+  0251    CC 0435               	CZ CHGREP ; ENTER 
+  0254    3E 7F                 	MVI A,7FH 
+  0256    32 C200               	STA PPI 
+  0259    3A C201               	LDA PPI+1 
+  025C    E6 80                 	ANI 80H 
+  025E    CC 0556               	CZ NOISE ; SPACE 
+  0261    3A 0989               	LDA LOUDN 
+  0264    47                    	MOV B,A 
+  0265    3E 80                 M01:	MVI A,080H 
+  0267    3D                    	DCR A 
+  0268    C2 0267               	JNZ $-1 
+  026B    05                    	DCR B 
+  026C    C2 0265               	JNZ M01 
+  026F    C3 022A               	JMP M00 
+                                 
+  0272                          SET_DISPLAY: 
+  0272    21 C001               	LXI H,DISP+1 
+  0275    36 00                 	MVI M,0 
+  0277    2B                    	DCX H 
+                                IFDEF PALMIRA 
+  0278    36 4D                 	MVI M,4DH 
+  027A    36 64                 	MVI M,64h;66H 
+  027C    36 0C                 	MVI M,0Ch;0FH 
+  027E    36 48                 	MVI M,48h;058H 
+                                ELSE 
+                                	MVI M,4DH 
+                                	MVI M,26H 
+                                	MVI M,77H 
+                                	MVI M,13H 
+                                ENDIF 
+  0280    23                    	INX H 
+  0281    36 27                 	MVI M,27H 
+  0283    7E                    	MOV A,M 
+  0284    7E                    	MOV A,M 
+  0285    E6 20                 	ANI 20H 
+  0287    CA 0284               	JZ $-3 
+  028A    21 E008               	LXI H,DMA+8 
+  028D    36 80                 	MVI M,80H 
+  028F    21 E004               	LXI H,DMA+4 
+  0292    36 00                 	MVI M,Low(VRAM_BUF) 
+  0294    36 A0                 	MVI M,High(VRAM_BUF) 
+  0296    23                    	INX H 
+                                IFDEF PALMIRA 
+  0297    36 45                 	MVI M,45h;0e1H 
+  0299    36 4B                 	MVI M,4bh;4bH 
+                                ELSE 
+                                	MVI M,0E1H 
+                                	MVI M,4BH 
+	MACRO-80 3.44	09-Dec-81	PAGE	1-4
+
+
+                                ENDIF 
+  029B    21 E008               	LXI H,DMA+8 
+  029E    36 A4                 	MVI M,0A4H 
+  02A0    C9                    	RET 
+                                 
+                                 
+  02A1                          CLS: 
+  02A1    21 A000               	LXI H,VRAM_BUF 
+  02A4    01 0BE2               	LXI B,0BE2H 
+  02A7    36 00                 CLS0:MVI M,0 
+  02A9    23                    	INX H 
+  02AA    0B                    	DCX B 
+  02AB    78                    	MOV A,B 
+  02AC    B1                    	ORA C 
+  02AD    C2 02A7               	JNZ CLS0 
+  02B0    C9                    	RET 
+                                 
+  02B1                          CHGFRM: 
+  02B1    CD 0371               	CALL DISLDN 
+  02B4    CD 0477               	CALL DRFORM 
+  02B7    26 00                 	MVI H,0 
+  02B9    36 2A                 	MVI M,PNT 
+  02BB    11 09A4               	LXI D,FORM 
+  02BE    06 00                 	MVI B,0 
+  02C0                          KEYIN: 
+  02C0    CD F81B               	CALL 0F81BH 
+  02C3    FE 08                 	CPI 8 
+  02C5    CA 0398               	JZ LFT 
+  02C8    FE 18                 	CPI 18H 
+  02CA    CA 03A6               	JZ RHT 
+  02CD    FE 19                 	CPI 19H 
+  02CF    CA 03B6               	JZ UP 
+  02D2    FE 1A                 	CPI 1AH 
+  02D4    CA 03C4               	JZ DWN 
+  02D7    FE 1B                 	CPI 1BH 
+  02D9    CA 04B3               	JZ INITPL 
+  02DC    FE 01                 	CPI 1 
+  02DE    CA 03F4               	JZ DEL 
+  02E1    FE 02                 	CPI 2 
+  02E3    CA 03D0               	JZ INS 
+  02E6    CD 02EC               	CALL DRSTR 
+  02E9    C3 02C0               	JMP KEYIN 
+                                 
+  02EC                          DRSTR: 
+  02EC    1A                    	LDAX D 
+  02ED    2E 1F                 	MVI L,31 
+  02EF    FE 1E                 	CPI 30 
+  02F1    D2 0304               	JNC KEY2 
+  02F4    D6 1E                 	SUI 30 
+  02F6    2F                    	CMA 
+  02F7    3C                    	INR A 
+  02F8    E5                    	PUSH H 
+  02F9    F5                    KEY3:	PUSH PSW 
+  02FA    CD 0927               	CALL PRESET 
+  02FD    F1                    	POP PSW 
+  02FE    2D                    	DCR L 
+	MACRO-80 3.44	09-Dec-81	PAGE	1-5
+
+
+  02FF    3D                    	DCR A 
+  0300    C2 02F9               	JNZ KEY3 
+  0303    E1                    	POP H 
+  0304                          KEY2: 
+  0304    CD 0927               	CALL PRESET 
+  0307    CD 032B               	CALL DELAY 
+  030A    1A                    	LDAX D 
+  030B    2E 1F                 	MVI L,31 
+  030D    FE 1E                 	CPI 30 
+  030F    D2 0325               	JNC KEY0 
+  0312    D6 1E                 	SUI 30 
+  0314    2F                    	CMA 
+  0315    3C                    	INR A 
+  0316    E5                    	PUSH H 
+  0317    F5                    KEY1:	PUSH PSW 
+  0318    CD 091A               	CALL PSET 
+  031B    F1                    	POP PSW 
+  031C    2D                    	DCR L 
+  031D    3D                    	DCR A 
+  031E    C2 0317               	JNZ KEY1 
+  0321    CD 0927               	CALL PRESET 
+  0324    E1                    	POP H 
+  0325                          KEY0: 
+  0325    CD 091A               	CALL PSET 
+  0328    C3 032B               	JMP DELAY 
+                                 
+  032B                          DELAY: 
+  032B    C5                    	PUSH B 
+  032C    01 03E8               	LXI B,1000 
+  032F    0B                    	DCX B 
+  0330    78                    	MOV A,B 
+  0331    B1                    	ORA C 
+  0332    C2 032F               	JNZ $-3 
+  0335    C1                    	POP B 
+  0336    C9                    	RET 
+                                 
+  0337                          LDN: 
+  0337    CD F81B               	CALL 0F81BH 
+  033A    FE 08                 	CPI 8 
+  033C    CA 0361               	JZ LDNDN 
+  033F    FE 18                 	CPI 18H 
+  0341    CA 034F               	JZ LDNUP 
+  0344    FE 1B                 	CPI 1BH 
+  0346    CA 04B3               	JZ INITPL 
+  0349    CD 0371               	CALL DISLDN 
+  034C    C3 0337               	JMP LDN 
+                                 
+  034F                          LDNUP: 
+  034F    3A 0989               	LDA LOUDN 
+  0352    3C                    	INR A 
+  0353    FE 40                 	CPI 64 
+  0355    CA 0337               	JZ LDN 
+  0358    32 0989               	STA LOUDN 
+  035B    CD 0371               	CALL DISLDN 
+  035E    C3 0337               	JMP LDN 
+                                 
+	MACRO-80 3.44	09-Dec-81	PAGE	1-6
+
+
+  0361                          LDNDN: 
+  0361    3A 0989               	LDA LOUDN 
+  0364    3D                    	DCR A 
+  0365    CA 0337               	JZ LDN 
+  0368    32 0989               	STA LOUDN 
+  036B    CD 0371               	CALL DISLDN 
+  036E    C3 0337               	JMP LDN 
+                                 
+  0371                          DISLDN: 
+  0371    E5                    	PUSH H 
+  0372    21 A0F2               	LXI H,VRAM 
+  0375    3A 0989               	LDA LOUDN 
+  0378    36 00                 	MVI M,0 
+  037A    23                    	INX H 
+  037B    3D                    	DCR A 
+  037C    C2 0378               	JNZ $-4 
+  037F    E1                    	POP H 
+  0380    CD 032B               	CALL DELAY 
+  0383    E5                    	PUSH H 
+  0384    21 A0F2               	LXI H,VRAM 
+  0387    3A 0989               	LDA LOUDN 
+  038A    36 2A                 	MVI M,'*' 
+  038C    23                    	INX H 
+  038D    3D                    	DCR A 
+  038E    C2 038A               	JNZ $-4 
+  0391    36 00                 	MVI M,0 
+  0393    E1                    	POP H 
+  0394    CD 032B               	CALL DELAY 
+  0397    C9                    	RET 
+                                 
+  0398                          LFT: 
+  0398    78                    	MOV A,B 
+  0399    B7                    	ORA A 
+  039A    CA 02C0               	JZ KEYIN 
+  039D    05                    	DCR B 
+  039E    25                    	DCR H 
+  039F    1B                    	DCX D 
+  03A0    CD 02EC               	CALL DRSTR 
+  03A3    C3 02C0               	JMP KEYIN 
+  03A6                          RHT: 
+  03A6    13                    	INX D 
+  03A7    1A                    	LDAX D 
+  03A8    1B                    	DCX D 
+  03A9    B7                    	ORA A 
+  03AA    CA 02C0               	JZ KEYIN 
+  03AD    13                    	INX D 
+  03AE    24                    	INR H 
+  03AF    04                    	INR B 
+  03B0    CD 02EC               	CALL DRSTR 
+  03B3    C3 02C0               	JMP KEYIN 
+  03B6                          UP: 
+  03B6    1A                    	LDAX D 
+  03B7    3D                    	DCR A 
+  03B8    FE 01                 	CPI 1 
+  03BA    CA 02C0               	JZ KEYIN 
+  03BD    12                    	STAX D 
+	MACRO-80 3.44	09-Dec-81	PAGE	1-7
+
+
+  03BE    CD 02EC               	CALL DRSTR 
+  03C1    C3 02C0               	JMP KEYIN 
+  03C4                          DWN: 
+  03C4    1A                    	LDAX D 
+  03C5    3C                    	INR A 
+  03C6    CA 02C0               	JZ KEYIN 
+  03C9    12                    	STAX D 
+  03CA    CD 02EC               	CALL DRSTR 
+  03CD    C3 02C0               	JMP KEYIN 
+                                 
+  03D0                          INS: 
+  03D0    E5                    	PUSH H 
+  03D1    C5                    	PUSH B 
+  03D2    EB                    	XCHG 
+  03D3    06 00                 	MVI B,0 
+  03D5    7E                    	MOV A,M 
+  03D6    23                    	INX H 
+  03D7    04                    	INR B 
+  03D8    B7                    	ORA A 
+  03D9    C2 03D4               	JNZ $-5 
+  03DC    00                    	NOP 
+  03DD    00                    	NOP 
+  03DE    00                    	NOP 
+  03DF    7E                    	MOV A,M 
+  03E0    23                    	INX H 
+  03E1    77                    	MOV M,A 
+  03E2    2B                    	DCX H 
+  03E3    2B                    	DCX H 
+  03E4    05                    	DCR B 
+  03E5    C2 03DD               	JNZ $-8 
+  03E8    EB                    	XCHG 
+  03E9    C1                    	POP B 
+  03EA    E1                    	POP H 
+  03EB    CD 0418               	CALL CLR 
+  03EE    CD 0477               	CALL DRFORM 
+  03F1    C3 02C0               	JMP KEYIN 
+                                 
+  03F4                          DEL: 
+  03F4    D5                    	PUSH D 
+  03F5    E5                    	PUSH H 
+  03F6    C5                    	PUSH B 
+  03F7    EB                    	XCHG 
+  03F8    23                    DEL1:	INX H 
+  03F9    7E                    	MOV A,M 
+  03FA    B7                    	ORA A 
+  03FB    CA 0404               	JZ DEL0 
+  03FE    2B                    	DCX H 
+  03FF    77                    	MOV M,A 
+  0400    23                    	INX H 
+  0401    C3 03F8               	JMP DEL1 
+  0404    2B                    DEL0:	DCX H 
+  0405    77                    	MOV M,A 
+  0406    23                    	INX H 
+  0407    23                    	INX H 
+  0408    7E                    	MOV A,M 
+  0409    2B                    	DCX H 
+	MACRO-80 3.44	09-Dec-81	PAGE	1-8
+
+
+  040A    77                    	MOV M,A 
+  040B    EB                    	XCHG 
+  040C    CD 0418               	CALL CLR 
+  040F    CD 0477               	CALL DRFORM 
+  0412    C1                    	POP B 
+  0413    E1                    	POP H 
+  0414    D1                    	POP D 
+  0415    C3 02C0               	JMP KEYIN 
+                                 
+  0418                          CLR: 
+  0418    E5                    	PUSH H 
+  0419    D5                    	PUSH D 
+  041A    C5                    	PUSH B 
+  041B    21 A140               	LXI H,VRAM+78 
+  041E    16 0F                 	MVI D,15 
+  0420    06 20                 CLR0:	MVI B,32 
+  0422    36 00                 	MVI M,0 
+  0424    23                    	INX H 
+  0425    05                    	DCR B 
+  0426    C2 0422               	JNZ $-4 
+  0429    01 002E               	LXI B,78-32 
+  042C    09                    	DAD B 
+  042D    15                    	DCR D 
+  042E    C2 0420               	JNZ CLR0 
+  0431    C1                    	POP B 
+  0432    D1                    	POP D 
+  0433    E1                    	POP H 
+  0434    C9                    	RET 
+                                 
+  0435                          CHGREP: 
+  0435    26 00                 	MVI H,0 
+  0437    2E 21                 	MVI L,33 
+  0439    11 09A4               	LXI D,FORM 
+  043C    1A                    	LDAX D 
+  043D    13                    	INX D 
+  043E    B7                    	ORA A 
+  043F    C2 043C               	JNZ $-3 
+  0442    1A                    	LDAX D 
+  0443    67                    	MOV H,A 
+  0444    25                    	DCR H 
+                                 
+  0445                          KINR: 
+  0445    CD F803               	CALL 0F803H 
+  0448    FE 08                 	CPI 8 
+  044A    CA 045A               	JZ RLFT 
+  044D    FE 18                 	CPI 18H 
+  044F    CA 046A               	JZ RRHT 
+  0452    FE 1B                 	CPI 1BH 
+  0454    CA 04B3               	JZ  INITPL 
+  0457    C3 0445               	JMP KINR 
+                                 
+  045A                          RLFT: 
+  045A    1A                    	LDAX D 
+  045B    3D                    	DCR A 
+  045C    CA 0445               	JZ KINR 
+  045F    12                    	STAX D 
+	MACRO-80 3.44	09-Dec-81	PAGE	1-9
+
+
+  0460    CD 0927               	CALL PRESET 
+  0463    25                    	DCR H 
+  0464    CD 091A               	CALL PSET 
+  0467    C3 0445               	JMP KINR 
+                                 
+  046A                          RRHT: 
+  046A    1A                    	LDAX D 
+  046B    3C                    	INR A 
+  046C    12                    	STAX D 
+  046D    CD 0927               	CALL PRESET 
+  0470    24                    	INR H 
+  0471    CD 091A               	CALL PSET 
+  0474    C3 0445               	JMP KINR 
+                                 
+  0477                          DRFORM: 
+  0477    E5                    	PUSH H 
+  0478    D5                    	PUSH D 
+  0479    C5                    	PUSH B 
+  047A    11 09A4               	LXI D,FORM 
+  047D    26 00                 	MVI H,0 
+  047F                          DRF1: 
+  047F    2E 1F                 	MVI L,31 
+  0481    1A                    	LDAX D 
+  0482    B7                    	ORA A 
+  0483    CA 04A6               	JZ DRF0 
+  0486    FE 1E                 	CPI 30 
+  0488    D2 049E               	JNC DRF2 
+  048B    D6 1E                 	SUI 30 
+  048D    2F                    	CMA 
+  048E    3C                    	INR A 
+  048F    E5                    	PUSH H 
+  0490    F5                    DRF6:	PUSH PSW 
+  0491    CD 091A               	CALL PSET 
+  0494    F1                    	POP PSW 
+  0495    2D                    	DCR L 
+  0496    3D                    	DCR A 
+  0497    C2 0490               	JNZ DRF6 
+  049A    CD 0927               	CALL PRESET 
+  049D    E1                    	POP H 
+  049E                          DRF2: 
+  049E    CD 091A               	CALL PSET 
+  04A1    24                    	INR H 
+  04A2    13                    	INX D 
+  04A3    C3 047F               	JMP DRF1 
+  04A6                          DRF0: 
+  04A6    13                    	INX D 
+  04A7    1A                    	LDAX D 
+  04A8    67                    	MOV H,A 
+  04A9    25                    	DCR H 
+  04AA    2E 21                 	MVI L,33 
+  04AC    CD 091A               	CALL PSET 
+  04AF    C1                    	POP B 
+  04B0    D1                    	POP D 
+  04B1    E1                    	POP H 
+  04B2    C9                    	RET 
+                                 
+	MACRO-80 3.44	09-Dec-81	PAGE	1-10
+
+
+  04B3                          INITPL: 
+  04B3    21 CC03               	LXI H,PSG1+3 
+  04B6    36 36                 	MVI M,36H 
+  04B8    36 76                 	MVI M,76H 
+  04BA    36 B6                 	MVI M,0B6H 
+  04BC    21 C202               	LXI H,PPI+2 
+  04BF    36 08                 	MVI M,8h 
+  04C1    21 C803               	LXI H,PSG2+3 
+  04C4    36 14                 	MVI M,14H 
+  04C6    36 54                 	MVI M,54H 
+  04C8    36 94                 	MVI M,94H 
+  04CA    2B                    	DCX H 
+  04CB    36 02                 	MVI M,2 
+  04CD    2B                    	DCX H 
+  04CE    36 02                 	MVI M,2 
+  04D0    2B                    	DCX H 
+  04D1    36 02                 	MVI M,2 
+  04D3    C9                    	RET 
+                                 
+                                 
+  04D4                          PLAY:; B - NOMER NOTY, A - NOMER KANALA 
+  04D4    C5                    	PUSH B 
+  04D5    4F                    	MOV C,A 
+  04D6    78                    	MOV A,B 
+  04D7    B7                    	ORA A 
+  04D8    79                    	MOV A,C 
+  04D9    C1                    	POP B 
+  04DA    CA 054C               	JZ PAUSE 
+  04DD    CD 04F1               	CALL CHGNOT 
+  04E0    F5                    	PUSH PSW 
+  04E1    78                    	MOV A,B 
+  04E2    0E FF                 	MVI C,0FFH 
+  04E4                          PL0: 
+  04E4    0C                    	INR C 
+  04E5    D6 0C                 	SUI 12 
+  04E7    D2 04E4               	JNC PL0 
+  04EA    C6 0D                 	ADI 13 
+  04EC    47                    	MOV B,A 
+  04ED    F1                    	POP PSW 
+  04EE    C3 0529               	JMP SOUND 
+                                 
+  04F1                          CHGNOT: 
+  04F1    F5                    	PUSH PSW 
+  04F2    78                    	MOV A,B 
+  04F3    FE 24                 	CPI 36 
+  04F5    DA 050B               	JC OB 
+  04F8    FE 30                 	CPI 48 
+  04FA    DA 051A               	JC O1 
+  04FD    3A C202               	LDA PPI+2 
+  0500    E6 80                 	ANI 80H 
+  0502    C2 0509               	JNZ CEND ; PSQ/K@R 
+  0505    78                    	MOV A,B 
+  0506    C6 18                 	ADI 24 
+  0508    47                    	MOV B,A 
+  0509                          CEND: 
+  0509    F1                    	POP PSW 
+	MACRO-80 3.44	09-Dec-81	PAGE	1-11
+
+
+  050A    C9                    	RET 
+                                 
+  050B                          OB: 
+  050B    3A C202               	LDA PPI+2 
+  050E    E6 20                 	ANI 20H 
+  0510    C2 0509               	JNZ CEND ; SQ(Ctrl) 
+  0513    78                    	MOV A,B 
+  0514    D6 0C                 	SUI 12 
+  0516    47                    	MOV B,A 
+  0517    C3 0509               	JMP CEND 
+                                 
+  051A                          O1: 
+  051A    3A C202               	LDA PPI+2 
+  051D    E6 40                 	ANI 40H 
+  051F    C2 0509               	JNZ CEND ; QQ(SHIFT) 
+  0522    78                    	MOV A,B 
+  0523    C6 18                 	ADI 24 
+  0525    47                    	MOV B,A 
+  0526    C3 0509               	JMP CEND 
+                                 
+  0529                          SOUND:; B - MNLEP MNR[, C - MOLEP NJR@B[,A - MNLEP J@M@K@ 
+  0529    E5                    	PUSH H 
+  052A    D5                    	PUSH D 
+  052B    F5                    	PUSH PSW 
+  052C    21 05E2               	LXI H,PLTBL 
+  052F    78                    	MOV A,B 
+  0530    3D                    	DCR A 
+  0531    87                    	ADD A 
+  0532    5F                    	MOV E,A 
+  0533    16 00                 	MVI D,0 
+  0535    19                    	DAD D 
+  0536    5E                    	MOV E,M 
+  0537    23                    	INX H 
+  0538    56                    	MOV D,M 
+  0539    EB                    	XCHG 
+  053A    41                    	MOV B,C 
+  053B    CD 05D5               	CALL ?SRNHB 
+  053E    EB                    	XCHG 
+  053F    21 CC00               	LXI H,PSG1 
+  0542    F1                    	POP PSW 
+  0543    4F                    	MOV C,A 
+  0544    06 00                 	MVI B,0 
+  0546    09                    	DAD B 
+  0547    73                    	MOV M,E 
+  0548    72                    	MOV M,D 
+  0549    D1                    	POP D 
+  054A    E1                    	POP H 
+  054B    C9                    	RET 
+                                 
+  054C                          PAUSE: 
+  054C    F5                    	PUSH PSW 
+  054D    0F                    	RRC 
+  054E    0F                    	RRC 
+  054F    F6 36                 	ORI 36H 
+  0551    32 CC03               	STA PSG1+3 
+  0554    F1                    	POP PSW 
+	MACRO-80 3.44	09-Dec-81	PAGE	1-12
+
+
+  0555    C9                    	RET 
+                                 
+  0556                          NOISE: 
+  0556    3E 14                 	MVI A,14H 
+  0558    32 C803               	STA PSG2+3 
+  055B    21 CC03               	LXI H,PSG1+3 
+  055E    36 54                 	MVI M,54H 
+  0560    36 36                 	MVI M,36H 
+  0562    3E 02                 	MVI A,2 
+  0564    32 C800               	STA PSG2 
+  0567    32 C802               	STA PSG2+2 
+  056A    3E 06                 	MVI A,6 
+  056C    32 C202               	STA PPI+2 
+  056F    3E 08                 	MVI A,8 
+  0571    32 CC01               	STA PSG1+1 
+  0574    06 01                 	MVI B,1 
+  0576    21 09A4               	LXI H,FORM 
+                                 
+  0579                          NOISE0: 
+  0579    05                    	DCR B 
+  057A    C2 058A               	JNZ NOISE1 
+  057D    3A 0989               	LDA LOUDN 
+  0580    47                    	MOV B,A 
+  0581    7E                    	MOV A,M 
+  0582    B7                    	ORA A 
+  0583    CC 05AB               	CZ ENDF 
+  0586    32 C800               	STA PSG2 
+  0589    23                    	INX H 
+  058A                          NOISE1: 
+  058A    11 0024               	LXI D,36 
+  058D                          NOISE2: 
+  058D    3A CC01               	LDA PSG1+1 
+  0590    C6 02                 	ADI 2 
+  0592    32 CC00               	STA PSG1 
+  0595    1B                    	DCX D 
+  0596    7A                    	MOV A,D 
+  0597    B3                    	ORA E 
+  0598    C2 058D               	JNZ NOISE2 
+  059B    3A C201               	LDA PPI+1 
+  059E    E6 80                 	ANI 80H 
+  05A0    CA 0579               	JZ NOISE0 
+  05A3    21 CC03               	LXI H,PSG1+3 
+  05A6    36 36                 	MVI M,36H 
+  05A8    36 76                 	MVI M,76H 
+  05AA    C9                    	RET 
+                                 
+  05AB                          ENDF: 
+  05AB    23                    	INX H 
+  05AC    5E                    	MOV E,M 
+  05AD    1D                    	DCR E 
+  05AE    16 00                 	MVI D,0 
+  05B0    21 09A4               	LXI H,FORM 
+  05B3    19                    	DAD D 
+  05B4    7E                    	MOV A,M 
+  05B5    C9                    	RET 
+                                 
+	MACRO-80 3.44	09-Dec-81	PAGE	1-13
+
+
+                                ; 16-BIT MULTIPLY 
+                                ; HL *= DE 
+  05B6                          ?MULHD: 
+  05B6    44                    	MOV B,H 
+  05B7    4D                    	MOV C,L 
+  05B8    21 0000               	LXI H,0 
+  05BB    3E 10                 	MVI A,16 
+  05BD                          ?01: 
+  05BD    29                    	DAD H 
+  05BE    EB                    	XCHG 
+  05BF    29                    	DAD H 
+  05C0    EB                    	XCHG 
+  05C1    D2 05C5               	JNC ?02 
+  05C4    09                    	DAD B 
+  05C5                          ?02: 
+  05C5    3D                    	DCR A 
+  05C6    C2 05BD               	JNZ ?01 
+  05C9    C9                    	RET 
+                                 
+                                 
+  05CA                          ?ABSHL: 
+  05CA    7C                    	MOV A,H 
+  05CB    B7                    	ORA A 
+  05CC    F0                    	RP 
+  05CD                          ?NEGHL: 
+  05CD    2B                    	DCX H 
+  05CE                          ?NOTHL: 
+  05CE    7D                    	MOV A,L 
+  05CF    2F                    	CMA 
+  05D0    6F                    	MOV L,A 
+  05D1    7C                    	MOV A,H 
+  05D2    2F                    	CMA 
+  05D3    67                    	MOV H,A 
+  05D4    C9                    	RET 
+                                 
+                                ; 16-BIT UNSIGNED SHIFT RIGHT 
+                                ; HL >>= B 
+  05D5                          ?SRNHB: 
+  05D5    04                    	INR B 
+  05D6                          ?71: 
+  05D6    05                    	DCR B 
+  05D7    C8                    	RZ 
+  05D8    A7                    	ANA A 
+  05D9    7C                    	MOV A,H 
+  05DA    1F                    	RAR 
+  05DB    67                    	MOV H,A 
+  05DC    7D                    	MOV A,L 
+  05DD    1F                    	RAR 
+  05DE    6F                    	MOV L,A 
+  05DF    C3 05D6               	JMP ?71 
+                                 
+                                ; JN]TTHVHEMR[ DEKEMH_ DK_ MNR JNMRPNJR@B[ 
+                                ;	16 LCV   ; 16.5 LCV 
+  05E2                          PLTBL: 
+  05E2    D459                  	DW 0D459H;0DB34H - DN 
+  05E4    C86E                  	DW 0C86EH;0CEE7H - DN# 
+	MACRO-80 3.44	09-Dec-81	PAGE	1-14
+
+
+  05E6    BD2E                  	DW 0BD2EH;0C34AH - PE 
+  05E8    B290                  	DW 0B290H;0B854H - PE# 
+  05EA    A88A                  	DW 0A88AH;0ADFCH - LH 
+  05EC    9F15                  	DW 09F15H;0A438H - T@ 
+  05EE    9627                  	DW 09627H;09B00H - T@# 
+  05F0    8DBA                  	DW 08DBAH;0924DH - QNK\ 
+  05F2    85C5                  	DW 085C5H;08A17H - QNK\# 
+  05F4    7E43                  	DW 07E43H;08257H - K_ 
+  05F6    772D                  	DW 0772DH;07B00H - K_# 
+  05F8    707D                  	DW 0707DH;0741FH - QH 
+                                 
+                                 
+  05FA                          LOOKBD: 
+  05FA    CD 0603               	CALL CLRTBL 
+  05FD    CD 0616               	CALL CONIN 
+  0600    C3 06AD               	JMP SETPSG 
+                                 
+  0603                          CLRTBL: 
+  0603    21 098A               	LXI H,WRKARE 
+  0606    3E 13                 	MVI A,ENDWRK-WRKARE 
+  0608    36 00                 	MVI M,0 
+  060A    23                    	INX H 
+  060B    3D                    	DCR A 
+  060C    C2 0608               	JNZ $-4 
+  060F    21 0993               	LXI H,NEWSND 
+  0612    22 098A               	SHLD SNDPNT 
+  0615    C9                    	RET 
+                                 
+                                 
+  0616                          CONIN: 
+  0616    06 FB                 	MVI B,0FBH 
+  0618    0E 06                 	MVI C,6 
+  061A    1E 30                 	MVI E,30H 
+  061C    21 098C               	LXI H,CHR 
+  061F                          NORM0: 
+  061F    78                    	MOV A,B 
+  0620    32 C200               	STA PPI 
+  0623    3A C201               	LDA PPI+1 
+  0626    FE FF                 	CPI 0FFH 
+  0628    C4 0637               	CNZ PRESS 
+  062B    78                    	MOV A,B 
+  062C    07                    	RLC 
+  062D    47                    	MOV B,A 
+  062E    7B                    	MOV A,E 
+  062F    C6 08                 	ADI 8 
+  0631    5F                    	MOV E,A 
+  0632    0D                    	DCR C 
+  0633    C2 061F               	JNZ NORM0 
+  0636    C9                    	RET 
+                                 
+  0637                          PRESS: 
+  0637    C5                    	PUSH B 
+  0638    D5                    	PUSH D 
+  0639    16 08                 	MVI D,8 
+  063B                          PRES0: 
+  063B    0F                    	RRC 
+	MACRO-80 3.44	09-Dec-81	PAGE	1-15
+
+
+  063C    D4 0647               	CNC FOUND 
+  063F    1C                    	INR E 
+  0640    15                    	DCR D 
+  0641    C2 063B               	JNZ PRES0 
+  0644                          PRES02: 
+  0644    D1                    	POP D 
+  0645    C1                    	POP B 
+  0646    C9                    	RET 
+                                 
+  0647                          FOUND: 
+  0647    4F                    	MOV C,A 
+  0648    E5                    	PUSH H 
+  0649    D5                    	PUSH D 
+  064A    C5                    	PUSH B 
+  064B    7B                    	MOV A,E 
+  064C    D6 30                 	SUI 30H 
+  064E    4F                    	MOV C,A 
+  064F    06 00                 	MVI B,0 
+  0651    21 09FF               	LXI H,KEYBRD 
+  0654    09                    	DAD B 
+  0655    7E                    	MOV A,M 
+  0656    2A 098A               	LHLD SNDPNT 
+  0659    77                    	MOV M,A 
+  065A    23                    	INX H 
+  065B    22 098A               	SHLD SNDPNT 
+  065E                          EX: 
+  065E    C1                    	POP B 
+  065F    D1                    	POP D 
+  0660    E1                    	POP H 
+  0661    79                    	MOV A,C 
+  0662    C9                    	RET 
+                                 
+  0663                          CHGFORM: 
+  0663    E5                    	PUSH H 
+  0664    D5                    	PUSH D 
+  0665    C5                    	PUSH B 
+  0666    F5                    	PUSH PSW 
+  0667    F5                    	PUSH PSW 
+  0668    11 0990               	LXI D,NUMFRM 
+  066B    21 098D               	LXI H,NOTES 
+  066E    3C                    	INR A 
+  066F    3D                    CHG1:	DCR A 
+  0670    CA 0678               	JZ CHG0 
+  0673    23                    	INX H 
+  0674    13                    	INX D 
+  0675    C3 066F               	JMP CHG1 
+  0678    7E                    CHG0:	MOV A,M 
+  0679    B8                    	CMP B 
+  067A    CA 0684               	JZ OLD 
+  067D    70                    	MOV M,B 
+  067E    EB                    	XCHG 
+  067F    36 01                 	MVI M,1 
+  0681    C3 0686               	JMP VOL 
+  0684                          OLD: 
+  0684    EB                    	XCHG 
+  0685    34                    INR M 
+	MACRO-80 3.44	09-Dec-81	PAGE	1-16
+
+
+  0686                          VOL: 
+  0686    4E                    	MOV C,M 
+  0687    0D                    	DCR C 
+  0688    06 00                 	MVI B,0 
+  068A    EB                    	XCHG 
+  068B    21 09A4               	LXI H,FORM 
+  068E    06 00                 	MVI B,0 
+  0690    09                    	DAD B 
+  0691    7E                    	MOV A,M 
+  0692    FE 00                 	CPI 0 
+  0694    C2 069E               	JNZ VOL1 
+  0697    23                    	INX H 
+  0698    7E                    	MOV A,M 
+  0699    EB                    	XCHG 
+  069A    77                    	MOV M,A 
+  069B    C3 0686               	JMP VOL 
+  069E                          VOL1: 
+  069E    57                    	MOV D,A 
+  069F    F1                    	POP PSW 
+  06A0    4F                    	MOV C,A 
+  06A1    06 00                 	MVI B,0 
+  06A3    21 C800               	LXI H,PSG2 
+  06A6    09                    	DAD B 
+  06A7    72                    	MOV M,D 
+  06A8    F1                    	POP PSW 
+  06A9    C1                    	POP B 
+  06AA    D1                    	POP D 
+  06AB    E1                    	POP H 
+  06AC    C9                    	RET 
+                                 
+                                 
+  06AD                          SETPSG: 
+  06AD    CD 06B6               	CALL SORTBL 
+  06B0    CD 06F4               	CALL SETFRQ 
+  06B3    C3 0706               	JMP  SETVOL 
+                                 
+                                 
+  06B6    21 0993               SORTBL:	LXI H,NEWSND 
+  06B9    11 099D               	LXI D,OLDSND 
+  06BC    01 0000               	LXI B,0 
+                                 
+  06BF    1A                    SRHLP:	LDAX D 
+  06C0    BE                    	CMP M 
+  06C1    CA 06D0               	JZ FNDNT 
+  06C4    13                    	INX D 
+  06C5    04                    	INR B 
+  06C6    78                    	MOV A,B 
+  06C7    FE 03                 	CPI 3 
+  06C9    C2 06BF               	JNZ SRHLP 
+  06CC    79                    PLNT:	MOV A,C 
+  06CD    C3 06E6               	JMP NXTNT 
+                                 
+  06D0                          FNDNT: 
+  06D0    B7                    	ORA A 
+  06D1    CA 06CC               	JZ PLNT 
+  06D4    D5                    	PUSH D 
+	MACRO-80 3.44	09-Dec-81	PAGE	1-17
+
+
+  06D5    C5                    	PUSH B 
+  06D6    E5                    	PUSH H 
+  06D7    21 0993               	LXI H,NEWSND 
+  06DA    16 00                 	MVI D,0 
+  06DC    58                    	MOV E,B 
+  06DD    19                    	DAD D 
+  06DE    4E                    	MOV C,M 
+  06DF    EB                    	XCHG 
+  06E0    E1                    	POP H 
+  06E1    7E                    	MOV A,M 
+  06E2    12                    	STAX D 
+  06E3    71                    	MOV M,C 
+  06E4    C1                    	POP B 
+  06E5    D1                    	POP D 
+                                 
+  06E6                          NXTNT: 
+  06E6    0C                    	INR C 
+  06E7    23                    	INX H 
+  06E8    11 099D               	LXI D,OLDSND 
+  06EB    06 00                 	MVI B,0 
+  06ED    79                    	MOV A,C 
+  06EE    FE 03                 	CPI 3 
+  06F0    C2 06BF               	JNZ SRHLP 
+  06F3    C9                    	RET 
+                                 
+                                 
+  06F4                          SETFRQ: 
+  06F4    21 0995               	LXI H,NEWSND+2 
+  06F7    3E 03                 	MVI A,3 
+  06F9                          SETFR0: 
+  06F9    3D                    	DCR A 
+  06FA    F5                    	PUSH PSW 
+  06FB    46                    	MOV B,M 
+  06FC    CD 04D4               	CALL PLAY 
+  06FF    F1                    	POP PSW 
+  0700    2B                    	DCX H 
+  0701    B7                    	ORA A 
+  0702    C2 06F9               	JNZ SETFR0 
+  0705    C9                    	RET 
+                                 
+                                 
+  0706                          SETVOL: 
+  0706    11 0993               	LXI D,NEWSND 
+  0709    21 099D               	LXI H,OLDSND 
+  070C    01 09A0               	LXI B,VOLSND 
+  070F    3E 03                 	MVI A,3 
+  0711    32 09A3               	STA XXX 
+  0714    1A                    M12:	LDAX D 
+  0715    B7                    	ORA A 
+  0716    CA 071D               	JZ M10 
+  0719    BE                    	CMP M 
+  071A    CA 0720               	JZ M11 
+  071D    3E 00                 M10:	MVI A,0 
+  071F    02                    	STAX B 
+  0720                          M11: 
+  0720    0A                    	LDAX B 
+	MACRO-80 3.44	09-Dec-81	PAGE	1-18
+
+
+  0721    3C                    	INR A 
+  0722    02                    	STAX B 
+  0723    CD 081A               	CALL SETONC 
+  0726    03                    	INX B 
+  0727    23                    	INX H 
+  0728    13                    	INX D 
+  0729    3A 09A3               	LDA XXX 
+  072C    3D                    	DCR A 
+  072D    32 09A3               	STA XXX 
+  0730    C2 0714               	JNZ M12 
+                                 
+  0733    21 099D               	LXI H,OLDSND 
+  0736    06 03                 	MVI B,3 
+  0738                          DSK0: 
+  0738    7E                    	MOV A,M 
+  0739    B7                    	ORA A 
+  073A    CA 0744               	JZ DCK2 
+  073D    E5                    	PUSH H 
+  073E    C5                    	PUSH B 
+  073F    CD 0841               	CALL DISKEY 
+  0742    C1                    	POP B 
+  0743    E1                    	POP H 
+  0744                          DCK2: 
+  0744    23                    	INX H 
+  0745    05                    	DCR B 
+  0746    C2 0738               	JNZ DSK0 
+                                 
+  0749    21 0993               	LXI H,NEWSND 
+  074C    06 03                 	MVI B,3 
+  074E                          DSK1: 
+  074E    7E                    	MOV A,M 
+  074F    FE 00                 	CPI 0 
+  0751    CA 075B               	JZ DSK3 
+  0754    E5                    	PUSH H 
+  0755    C5                    	PUSH B 
+  0756    CD 0862               	CALL DISPK 
+  0759    C1                    	POP B 
+  075A    E1                    	POP H 
+  075B                          DSK3: 
+  075B    23                    	INX H 
+  075C    05                    	DCR B 
+  075D    C2 074E               	JNZ DSK1 
+                                 
+  0760    3A C202               	LDA PPI+2 
+  0763    E6 20                 	ANI 20H 
+  0765    CA 077F               	JZ DSO0 
+  0768    CD 0974               	CALL PRINT 
+  076B    AB0D                  	DW VRAM+33*78++13;2509+78 
+  076D    62 6F 6C 78           	DB 'bolx{aq oktawa',80H 
+  0771    7B 61 71 20           
+  0775    6F 6B 74 61           
+  0779    77 61 80              
+  077C    C3 0793               	JMP DSO1 
+  077F                          DSO0: 
+  077F    CD 0974               	CALL PRINT 
+  0782    AB0D                  	DW VRAM+33*78+13;2509+78 
+	MACRO-80 3.44	09-Dec-81	PAGE	1-19
+
+
+  0784    20 6D 61 6C           	DB ' malaq  oktawa',80H 
+  0788    61 71 20 20           
+  078C    6F 6B 74 61           
+  0790    77 61 80              
+  0793                          DSO1: 
+  0793    3A C202               	LDA PPI+2 
+  0796    E6 40                 	ANI 40H 
+  0798    CA 07BE               	JZ  DSO2 
+  079B    CD 0974               	CALL PRINT 
+  079E    AB26                  	DW VRAM+33*78+38;2534+78 
+  07A0    31 2D 71 20           	DB '1-q oktawa',80H 
+  07A4    6F 6B 74 61           
+  07A8    77 61 80              
+  07AB    CD 0974               	CALL PRINT 
+  07AE    A674                  	DW VRAM+18*78+6;1332+78 
+  07B0    31 2D 71 20           	DB '1-q oktawa',80H 
+  07B4    6F 6B 74 61           
+  07B8    77 61 80              
+  07BB    C3 07DE               	JMP DSO3 
+  07BE                          DSO2: 
+  07BE    CD 0974               	CALL PRINT 
+  07C1    AB26                  	DW VRAM+33*78+38;2534+78 
+  07C3    33 2D 71 20           	DB '3-q oktawa',80H 
+  07C7    6F 6B 74 61           
+  07CB    77 61 80              
+  07CE    CD 0974               	CALL PRINT 
+  07D1    A674                  	DW VRAM+18*78+6;1332+78 
+  07D3    33 2D 71 20           	DB '3-q oktawa',80H 
+  07D7    6F 6B 74 61           
+  07DB    77 61 80              
+  07DE                          DSO3: 
+  07DE    3A C202               	LDA PPI+2 
+  07E1    E6 80                 	ANI 80H 
+  07E3    CA 07F9               	JZ DSO4 
+  07E6    CD 0974               	CALL PRINT 
+  07E9    A695                  	DW VRAM+18*78+39;1365+78 
+  07EB    32 2D 71 20           	DB '2-q oktawa',80H 
+  07EF    6F 6B 74 61           
+  07F3    77 61 80              
+  07F6    C3 0809               	JMP DSO5 
+  07F9                          DSO4: 
+  07F9    CD 0974               	CALL PRINT 
+  07FC    A695                  	DW VRAM+18*78+39;1365+78 
+  07FE    34 2D 71 20           	DB '4-q oktawa',80H 
+  0802    6F 6B 74 61           
+  0806    77 61 80              
+  0809                          DSO5: 
+  0809    21 0993               	LXI H,NEWSND 
+  080C    11 099D               	LXI D,OLDSND 
+  080F    06 03                 	MVI B,3 
+  0811    7E                    	MOV A,M 
+  0812    12                    	STAX D 
+  0813    23                    	INX H 
+  0814    13                    	INX D 
+  0815    05                    	DCR B 
+  0816    C2 0810               	JNZ $-6 
+	MACRO-80 3.44	09-Dec-81	PAGE	1-20
+
+
+                                 
+  0819    C9                    	RET 
+                                 
+  081A                          SETONC: 
+  081A    E5                    	PUSH H 
+  081B                          SETON0: 
+  081B    21 09A4               	LXI H,FORM 
+  081E    0A                    	LDAX B 
+  081F    3D                    	DCR A 
+  0820    C5                    	PUSH B 
+  0821    4F                    	MOV C,A 
+  0822    06 00                 	MVI B,0 
+  0824    09                    	DAD B 
+  0825    C1                    	POP B 
+  0826    7E                    	MOV A,M 
+  0827    B7                    	ORA A 
+  0828    CA 083B               	JZ  SETON1 
+  082B    21 C803               	LXI H,PSG2+3 
+  082E    F5                    	PUSH PSW 
+  082F    3A 09A3               	LDA XXX 
+  0832    2B                    	DCX H 
+  0833    3D                    	DCR A 
+  0834    C2 0832               	JNZ $-2 
+  0837    F1                    	POP PSW 
+  0838    77                    	MOV M,A 
+  0839    E1                    	POP H 
+  083A    C9                    	RET 
+                                 
+  083B                          SETON1: 
+  083B    23                    	INX H 
+  083C    7E                    	MOV A,M 
+  083D    02                    	STAX B 
+  083E    C3 081B               	JMP SETON0 
+                                 
+  0841                          DISKEY: 
+  0841    D6 18                 	SUI 24 
+  0843    F5                    	PUSH PSW 
+  0844    87                    	ADD A 
+  0845    4F                    	MOV C,A 
+  0846    06 00                 	MVI B,0 
+  0848    21 0A2F               	LXI H,KEYS 
+  084B    09                    	DAD B 
+  084C    5E                    	MOV E,M 
+  084D    23                    	INX H 
+  084E    56                    	MOV D,M 
+  084F    EB                    	XCHG 
+  0850    01 A70A               	LXI B,VRAM+1560 
+  0853    09                    	DAD B 
+  0854    CD 08A5               	CALL DRKEY 
+  0857    21 0A8D               	LXI H,KEYSGN 
+  085A    F1                    	POP PSW 
+  085B    4F                    	MOV C,A 
+  085C    06 00                 	MVI B,0 
+  085E    09                    	DAD B 
+  085F    7E                    	MOV A,M 
+  0860    12                    	STAX D 
+	MACRO-80 3.44	09-Dec-81	PAGE	1-21
+
+
+  0861    C9                    	RET 
+                                 
+  0862                          DISPK: 
+  0862    D6 18                 	SUI 24 
+  0864    87                    	ADD A 
+  0865    4F                    	MOV C,A 
+  0866    06 00                 	MVI B,0 
+  0868    21 0A2F               	LXI H,KEYS 
+  086B    09                    	DAD B 
+  086C    5E                    	MOV E,M 
+  086D    23                    	INX H 
+  086E    56                    	MOV D,M 
+  086F    EB                    	XCHG 
+  0870    01 A70A               	LXI B,VRAM+1560 
+  0873    09                    	DAD B 
+  0874    36 2B                 	MVI M,'+' 
+  0876    23                    	INX H 
+  0877    36 2D                 	MVI M,'-' 
+  0879    23                    	INX H 
+  087A    36 2B                 	MVI M,'+' 
+  087C    01 004C               	LXI B,76 
+  087F    09                    	DAD B 
+  0880    36 1B                 	MVI M,1bh;'|' 
+  0882    23                    	INX H 
+  0883    36 2A                 	MVI M,'*' 
+  0885    23                    	INX H 
+  0886    36 1B                 	MVI M,1bh;'|' 
+  0888    09                    	DAD B 
+  0889    36 2B                 	MVI M,'+' 
+  088B    23                    	INX H 
+  088C    36 2D                 	MVI M,'-' 
+  088E    23                    	INX H 
+  088F    36 2B                 	MVI M,'+' 
+  0891    C9                    	RET 
+                                 
+  0892                          DISNK: 
+  0892    87                    	ADD A 
+  0893    4F                    	MOV C,A 
+  0894    06 00                 	MVI B,0 
+  0896    21 0A7D               	LXI H,NONRES 
+  0899    09                    	DAD B 
+  089A    5E                    	MOV E,M 
+  089B    23                    	INX H 
+  089C    56                    	MOV D,M 
+  089D    EB                    	XCHG 
+  089E    01 A70A               	LXI B,VRAM+1560 
+  08A1    09                    	DAD B 
+  08A2    C3 08A5               	JMP DRKEY 
+                                 
+  08A5                          DRKEY: 
+  08A5    36 13                 	MVI M,13h;'*' 
+  08A7    23                    	INX H 
+  08A8    36 03                 	MVI M,3;'*' 
+  08AA    23                    	INX H 
+  08AB    36 07                 	MVI M,7;'*' 
+  08AD    01 004C               	LXI B,76 
+	MACRO-80 3.44	09-Dec-81	PAGE	1-22
+
+
+  08B0    09                    	DAD B 
+  08B1    36 11                 	MVI M,11h;'*' 
+  08B3    23                    	INX H 
+  08B4    54                    	MOV D,H 
+  08B5    5D                    	MOV E,L 
+  08B6    23                    	INX H 
+  08B7    36 06                 	MVI M,6;'*' 
+  08B9    09                    	DAD B 
+  08BA    36 15                 	MVI M,15h;'*' 
+  08BC    23                    	INX H 
+  08BD    36 14                 	MVI M,14h;'*' 
+  08BF    23                    	INX H 
+  08C0    36 16                 	MVI M,16h;'*' 
+  08C2    C9                    	RET 
+                                 
+                                 
+  08C3    16 00                 MULTI:	MVI D,0 
+  08C5    6A                    	MOV L,D 
+  08C6    29                    	DAD H 
+  08C7    D2 08CB               	JNC $+4 
+  08CA    19                    	DAD D 
+  08CB    29                    	DAD H 
+  08CC    D2 08D0               	JNC $+4 
+  08CF    19                    	DAD D 
+  08D0    29                    	DAD H 
+  08D1    D2 08D5               	JNC $+4 
+  08D4    19                    	DAD D 
+  08D5    29                    	DAD H 
+  08D6    D2 08DA               	JNC $+4 
+  08D9    19                    	DAD D 
+  08DA    29                    	DAD H 
+  08DB    D2 08DF               	JNC $+4 
+  08DE    19                    	DAD D 
+  08DF    29                    	DAD H 
+  08E0    D2 08E4               	JNC $+4 
+  08E3    19                    	DAD D 
+  08E4    29                    	DAD H 
+  08E5    D2 08E9               	JNC $+4 
+  08E8    19                    	DAD D 
+  08E9    29                    	DAD H 
+  08EA    D0                    	RNC 
+  08EB    19                    	DAD D 
+  08EC    C9                    	RET 
+                                 
+                                 
+  08ED                          GETADR: 
+  08ED    44                    	MOV B,H 
+  08EE    4D                    	MOV C,L 
+  08EF    79                    	MOV A,C 
+  08F0    A7                    	ANA A 
+  08F1    1F                    	RAR 
+  08F2    67                    	MOV H,A 
+  08F3    1E 4E                 	MVI E,78 
+  08F5    CD 08C3               	CALL MULTI 
+  08F8    11 A0F2               	LXI D,VRAM 
+  08FB    19                    	DAD D 
+	MACRO-80 3.44	09-Dec-81	PAGE	1-23
+
+
+  08FC    78                    	MOV A,B 
+  08FD    A7                    	ANA A 
+  08FE    1F                    	RAR 
+  08FF    16 00                 	MVI D,0 
+  0901    5F                    	MOV E,A 
+  0902    19                    	DAD D 
+  0903    79                    	MOV A,C 
+  0904    A7                    	ANA A 
+  0905    1F                    	RAR 
+  0906    78                    	MOV A,B 
+  0907    DA 0912               	JC GETDN 
+  090A    E6 01                 	ANI 1 
+  090C    3E 01                 	MVI A,1 
+  090E    C8                    	RZ 
+  090F    3E 02                 	MVI A,2 
+  0911    C9                    	RET 
+                                 
+  0912                          GETDN: 
+  0912    E6 01                 	ANI 1 
+  0914    3E 04                 	MVI A,4 
+  0916    C0                    	RNZ 
+  0917    3E 10                 	MVI A,10H 
+  0919    C9                    	RET 
+                                 
+  091A    E5                    PSET:	PUSH H 
+  091B    C5                    	PUSH B 
+  091C    D5                    	PUSH D 
+  091D    CD 08ED               	CALL GETADR 
+  0920    46                    	MOV B,M 
+  0921    B0                    	ORA B 
+  0922    77                    	MOV M,A 
+  0923    D1                    	POP D 
+  0924    C1                    	POP B 
+  0925    E1                    	POP H 
+  0926    C9                    	RET 
+                                 
+  0927    E5                    PRESET:	PUSH H 
+  0928    C5                    	PUSH B 
+  0929    D5                    	PUSH D 
+  092A    CD 08ED               	CALL GETADR 
+  092D    2F                    	CMA 
+  092E    46                    	MOV B,M 
+  092F    A0                    	ANA B 
+  0930    77                    	MOV M,A 
+  0931    D1                    	POP D 
+  0932    C1                    	POP B 
+  0933    E1                    	POP H 
+  0934    C9                    	RET 
+                                 
+  0935    E5                    POINT:	PUSH H 
+  0936    C5                    	PUSH B 
+  0937    D5                    	PUSH D 
+  0938    CD 08ED               	CALL GETADR 
+  093B    46                    	MOV B,M 
+  093C    A0                    	ANA B 
+  093D    C4 0944               	CNZ POINT0 
+	MACRO-80 3.44	09-Dec-81	PAGE	1-24
+
+
+  0940    D1                    	POP D 
+  0941    C1                    	POP B 
+  0942    E1                    	POP H 
+  0943    C9                    	RET 
+  0944    3E FF                 POINT0:	MVI A,0FFH 
+  0946    C9                    	RET 
+                                 
+  0947                          PICT: 
+  0947    7E                    	MOV A,M 
+  0948    B7                    	ORA A 
+  0949    23                    	INX H 
+  094A    CA 096A               	JZ GETVRA 
+  094D    4E                    	MOV C,M 
+  094E    23                    	INX H 
+  094F    46                    	MOV B,M 
+  0950    23                    	INX H 
+  0951    E5                    	PUSH H 
+  0952    EB                    	XCHG 
+  0953    50                    	MOV D,B 
+  0954    06 00                 	MVI B,0 
+  0956    F5                    	PUSH PSW 
+  0957    79                    	MOV A,C 
+  0958    B7                    	ORA A 
+  0959    F2 095E               	JP PCT0 
+  095C    06 FF                 	MVI B,0FFH 
+  095E                          PCT0: 
+  095E    F1                    	POP PSW 
+  095F                          PCT1: 
+  095F    77                    	MOV M,A 
+  0960    09                    	DAD B 
+  0961    15                    	DCR D 
+  0962    C2 095F               	JNZ PCT1 
+  0965    EB                    	XCHG 
+  0966    E1                    	POP H 
+  0967    C3 0947               	JMP PICT 
+  096A                          GETVRA: 
+  096A    5E                    	MOV E,M 
+  096B    23                    	INX H 
+  096C    56                    	MOV D,M 
+  096D    7A                    	MOV A,D 
+  096E    23                    	INX H 
+  096F    B7                    	ORA A 
+  0970    C8                    	RZ 
+  0971    C3 0947               	JMP PICT 
+                                 
+                                 
+  0974                          PRINT: 
+  0974    E1                    	POP H 
+  0975    5E                    	MOV E,M 
+  0976    23                    	INX H 
+  0977    56                    	MOV D,M 
+  0978    23                    	INX H 
+  0979                          PRINT0: 
+  0979    7E                    	MOV A,M 
+  097A    B7                    	ORA A 
+  097B    FA 0984               	JM PRINT1 
+	MACRO-80 3.44	09-Dec-81	PAGE	1-25
+
+
+                                 
+  097E    12                    	STAX D 
+  097F    23                    	INX H 
+  0980    13                    	INX D 
+  0981    C3 0979               	JMP PRINT0 
+  0984                          PRINT1: 
+  0984    E6 7F                 	ANI 7FH 
+  0986    12                    	STAX D 
+  0987    23                    	INX H 
+  0988    E9                    	PCHL 
+                                 
+                                 
+  0989                          LOUDN:DS 1 
+                                 
+  098A                          WRKARE: 
+  098A                          SNDPNT:	DS 2 
+  098C                          CHR:	DS 1 
+  098D                          NOTES:DS 3 
+  0990                          NUMFRM:DS 3 
+  0993                          NEWSND:DS 10 
+  099D                          ENDWRK: 
+  099D                          OLDSND:DS 3 
+  09A0                          VOLSND:DS 3 
+  09A3                          XXX:	DS 1 
+                                 
+  09A4                          FORM:	; OCHA@^Y@_ QHCM@K@ 
+                                ;DB 4,4,3,3,3,3,3,4,4,0,1 
+  09A4    0A 02 02 02           	DB 10,2,2,2,2,2,3,3,3,3,4,5,6,7,8,9,10,11,12,13,14,15 
+  09A8    02 02 03 03           
+  09AC    03 03 04 05           
+  09B0    06 07 08 09           
+  09B4    0A 0B 0C 0D           
+  09B8    0E 0F                 
+  09BA    10 11 12 14           	DB 16,17,18,20,25,30,100,0,29 
+  09BE    19 1E 64 00           
+  09C2    1D                    
+  09C3                          	DS 60 
+                                 
+  09FF                          KEYBRD:	; R@AKHV@ JK@BH@RSP[ 
+  09FF    00 2C 2E 00           	DB 00,44,46,00,49,51,00,54,56,58,00,00,40,61,42,41 
+  0A03    31 33 00 36           
+  0A07    38 3A 00 00           
+  0A0B    28 3D 2A 29           
+  0A0F    26 00 24 2D           	DB 38,00,36,45,37,50,00,53,60,31,43,48,00,29,52,34 
+  0A13    25 32 00 35           
+  0A17    3C 1F 2B 30           
+  0A1B    00 1D 34 22           
+  0A1F    1E 18 20 1C           	DB 30,24,32,28,33,47,39,27,35,25,59,55,00,57,26,00 
+  0A23    21 2F 27 1B           
+  0A27    23 19 3B 37           
+  0A2B    00 39 1A 00           
+                                 
+  0A2F                          KEYS: 
+  0A2F    02C7                  	DW 702+9 
+  0A31    01DF                  	DW 468+11 
+  0A33    02CB                  	DW 702+13 
+	MACRO-80 3.44	09-Dec-81	PAGE	1-26
+
+
+  0A35    01E3                  	DW 468+15 
+  0A37    02CF                  	DW 702+17 
+  0A39    02D3                  	DW 702+21 
+  0A3B    01EB                  	DW 468+23 
+  0A3D    02D7                  	DW 702+25 
+  0A3F    01EF                  	DW 468+27 
+  0A41    02DB                  	DW 702+29 
+  0A43    01F3                  	DW 468+31 
+  0A45    02DF                  	DW 702+33 
+  0A47    02E3                  	DW 702+37 
+  0A49    01FB                  	DW 468+39 
+  0A4B    02E7                  	DW 702+41 
+  0A4D    01FF                  	DW 468+43 
+  0A4F    02EB                  	DW 702+45 
+  0A51    02EF                  	DW 702+49 
+  0A53    0207                  	DW 468+51 
+  0A55    00EF                  	DW 234+5 
+  0A57    0007                  	DW 7 
+  0A59    00F3                  	DW 234+9 
+  0A5B    000B                  	DW 11 
+  0A5D    00F7                  	DW 234+13 
+  0A5F    00FB                  	DW 234+17 
+  0A61    0013                  	DW 19 
+  0A63    00FF                  	DW 234+21 
+  0A65    0017                  	DW 23 
+  0A67    0103                  	DW 234+25 
+  0A69    0107                  	DW 234+29 
+  0A6B    001F                  	DW 31 
+  0A6D    010B                  	DW 234+33 
+  0A6F    0023                  	DW 35 
+  0A71    010F                  	DW 234+37 
+  0A73    0027                  	DW 39 
+  0A75    0113                  	DW 234+41 
+  0A77    0117                  	DW 234+45 
+  0A79    002F                  	DW 47 
+  0A7B    011B                  	DW 234+49 
+                                 
+  0A7D                          NONRES: 
+  0A7D    0003                  	DW 3 
+  0A7F    000F                  	DW 15 
+  0A81    001B                  	DW 27 
+  0A83    002B                  	DW 43 
+  0A85    01DB                  	DW 468+7 
+  0A87    01E7                  	DW 468+19 
+  0A89    01F7                  	DW 468+35 
+  0A8B    0203                  	DW 468+47 
+                                 
+  0A8D                          KEYSGN: 
+  0A8D    43 23 44 23           	DB 'C#D#EF#G#A#BC#D#EF#G#A#BC#D#EF#G#A#BC#D' 
+  0A91    45 46 23 47           
+  0A95    23 41 23 42           
+  0A99    43 23 44 23           
+  0A9D    45 46 23 47           
+  0AA1    23 41 23 42           
+  0AA5    43 23 44 23           
+  0AA9    45 46 23 47           
+	MACRO-80 3.44	09-Dec-81	PAGE	1-27
+
+
+  0AAD    23 41 23 42           
+  0AB1    43 23 44              
+                                 
+                                 
+                                	END 
+	MACRO-80 3.44	09-Dec-81	PAGE	S
+
+
+Macros:
+@IN             @OUT            
+
+Symbols:
+05BD 	?01             05C5 	?02             05D6 	?71             
+05CA 	?ABSHL          0040 	?CTRL           05B6 	?MULHD          
+05CD 	?NEGHL          05CE 	?NOTHL          0020 	?SHIFT          
+05D5 	?SRNHB          0509 	CEND            0678 	CHG0            
+066F 	CHG1            0663 	CHGFORM         02B1 	CHGFRM          
+04F1 	CHGNOT          0435 	CHGREP          098C 	CHR             
+0418 	CLR             0420 	CLR0            0603 	CLRTBL          
+02A1 	CLS             02A7 	CLS0            0616 	CONIN           
+0744 	DCK2            03F4 	DEL             0404 	DEL0            
+03F8 	DEL1            032B 	DELAY           0841 	DISKEY          
+0371 	DISLDN          0892 	DISNK           C000 	DISP            
+0862 	DISPK           E000 	DMA             04A6 	DRF0            
+047F 	DRF1            049E 	DRF2            0490 	DRF6            
+0477 	DRFORM          08A5 	DRKEY           02EC 	DRSTR           
+0738 	DSK0            074E 	DSK1            075B 	DSK3            
+077F 	DSO0            0793 	DSO1            07BE 	DSO2            
+07DE 	DSO3            07F9 	DSO4            0809 	DSO5            
+03C4 	DWN             05AB 	ENDF            099D 	ENDWRK          
+065E 	EX              06D0 	FNDNT           09A4 	FORM            
+0647 	FOUND           08ED 	GETADR          0912 	GETDN           
+096A 	GETVRA          04B3 	INITPL          03D0 	INS             
+0325 	KEY0            0317 	KEY1            0304 	KEY2            
+02F9 	KEY3            09FF 	KEYBRD          02C0 	KEYIN           
+0A2F 	KEYS            0A8D 	KEYSGN          0445 	KINR            
+0337 	LDN             0361 	LDNDN           034F 	LDNUP           
+0398 	LFT             05FA 	LOOKBD          F000 	LOTMP           
+0989 	LOUDN           022A 	M00             0265 	M01             
+071D 	M10             0720 	M11             0714 	M12             
+0210 	M30             021D 	M31             08C3 	MULTI           
+0993 	NEWSND          0556 	NOISE           0579 	NOISE0          
+058A 	NOISE1          058D 	NOISE2          0A7D 	NONRES          
+061F 	NORM0           098D 	NOTES           0990 	NUMFRM          
+06E6 	NXTNT           051A 	O1              050B 	OB              
+0684 	OLD             099D 	OLDSND          0001 	PALMIRA         
+054C 	PAUSE           095E 	PCT0            095F 	PCT1            
+0947 	PICT            04E4 	PL0             04D4 	PLAY            
+06CC 	PLNT            05E2 	PLTBL           002A 	PNT             
+0935 	POINT           0944 	POINT0          C200 	PPI             
+C400 	PPI2            063B 	PRES0           0644 	PRES02          
+0927 	PRESET          0637 	PRESS           0974 	PRINT           
+0979 	PRINT0          0984 	PRINT1          091A 	PSET            
+CC00 	PSG1            C800 	PSG2            03A6 	RHT             
+045A 	RLFT            046A 	RRHT            06F9 	SETFR0          
+06F4 	SETFRQ          081B 	SETON0          083B 	SETON1          
+081A 	SETONC          06AD 	SETPSG          0706 	SETVOL          
+0272 	SET_DISPLAY     098A 	SNDPNT          06B6 	SORTBL          
+0529 	SOUND           06BF 	SRHLP           03B6 	UP              
+0686 	VOL             069E 	VOL1            09A0 	VOLSND          
+A0F2 	VRAM            A000 	VRAM_BUF        098A 	WRKARE          
+09A3 	XXX             
+
+
+
+No Fatal error(s)
+
+
+    046A 	RRH
